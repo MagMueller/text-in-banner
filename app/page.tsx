@@ -236,6 +236,9 @@ export default function Home() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
+            <p className="text-sm text-gray-600 italic text-center">
+              Drag text around to adjust position
+            </p>
             <Textarea
               value={bubbleText}
               onChange={(e) => setBubbleText(e.target.value)}
