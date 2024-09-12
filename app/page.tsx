@@ -5,7 +5,7 @@ import { speechBubbles } from "@/components/speechBubbles";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, MessageSquare, User } from "lucide-react";
+import { MessageCircle, MessageSquare } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const boxStyles = [
@@ -54,13 +54,28 @@ export default function Home() {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        drawCanvas(false); // Draw without avatar
+        // Create a new canvas for the download
+        const downloadCanvas = document.createElement('canvas');
+        downloadCanvas.width = 1400;
+        downloadCanvas.height = 350;
+        const downloadCtx = downloadCanvas.getContext('2d');
+        
+        if (downloadCtx) {
+          // Draw only the background image and text
+          const img = new Image();
+          img.onload = () => {
+            downloadCtx.drawImage(img, 0, 0, 1400, 350);
+            drawTextAndBox(downloadCtx);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'linkedin-banner-with-text.png';
+            link.href = downloadCanvas.toDataURL();
+            link.click();
+          };
+          img.src = uploadedImage as string;
+        }
       }
-      const link = document.createElement('a');
-      link.download = 'linkedin-banner-with-text.png';
-      link.href = canvas.toDataURL();
-      link.click();
-      drawCanvas(true); // Redraw with avatar
     }
   };
 
@@ -153,17 +168,19 @@ export default function Home() {
             ctx.stroke();
 
             // Draw user icon
-            ctx.fillStyle = "#A0A0A0";
             const iconSize = avatarSize * 0.6;
             const iconX = avatarX + (avatarSize - iconSize) / 2;
             const iconY = avatarY + (avatarSize - iconSize) / 2;
             
-            User({
-              size: iconSize,
-              absoluteStrokeWidth: true,
-              strokeWidth: 2,
-              color: "#A0A0A0"
-            }).draw(ctx, iconX, iconY);
+            ctx.fillStyle = "#A0A0A0";
+            ctx.beginPath();
+            ctx.arc(iconX + iconSize / 2, iconY + iconSize / 3, iconSize / 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(iconX, iconY + iconSize);
+            ctx.quadraticCurveTo(iconX + iconSize / 2, iconY + iconSize * 1.2, iconX + iconSize, iconY + iconSize);
+            ctx.quadraticCurveTo(iconX + iconSize / 2, iconY + iconSize * 0.8, iconX, iconY + iconSize);
+            ctx.fill();
           }
         };
         img.src = uploadedImage;
