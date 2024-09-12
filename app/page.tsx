@@ -5,7 +5,7 @@ import { speechBubbles } from "@/components/speechBubbles";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, MessageSquare } from "lucide-react";
+import { MessageCircle, MessageSquare, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const boxStyles = [
@@ -54,16 +54,13 @@ export default function Home() {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Temporarily hide the profile picture placeholder
-        ctx.globalAlpha = 1;
-        drawCanvas(false);
+        drawCanvas(false); // Draw without avatar
       }
       const link = document.createElement('a');
       link.download = 'linkedin-banner-with-text.png';
       link.href = canvas.toDataURL();
       link.click();
-      // Redraw the canvas with the profile picture placeholder
-      drawCanvas(true);
+      drawCanvas(true); // Redraw with avatar
     }
   };
 
@@ -110,7 +107,7 @@ export default function Home() {
       const path = new Path2D(selectedBoxStyle.path(boxWidth, boxHeight));
       ctx.fill(path);
       ctx.strokeStyle = textColor;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.stroke(path);
     }
 
@@ -121,7 +118,7 @@ export default function Home() {
     ctx.textBaseline = 'middle';
     const lines = bubbleText.split('\n');
     lines.forEach((line, index) => {
-      ctx.fillText(line, boxWidth / 2, (30 + index * 30) * (boxSize / 100));
+      ctx.fillText(line, boxWidth / 2, boxHeight / 2 + (index - (lines.length - 1) / 2) * 30 * (boxSize / 100));
     });
 
     ctx.resetTransform();
@@ -142,42 +139,31 @@ export default function Home() {
 
           if (includeProfilePlaceholder) {
             // Draw profile picture placeholder
-            const avatarSize = 200; // Increased size
-            const avatarX = 20;
-            const avatarY = 350 - avatarSize + 30; // 30px overlap
+            const avatarSize = 250;
+            const avatarX = 100;
+            const avatarY = 350 - avatarSize + 50; // 50px overlap
 
-            // Draw white circle for border
-            ctx.beginPath();
-            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2 + 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fill();
-
-            // Clip the avatar area
-            ctx.save();
+            ctx.fillStyle = "#E0E0E0";
             ctx.beginPath();
             ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, 2 * Math.PI);
-            ctx.clip();
-
-            // Draw part of the background image as avatar
-            ctx.drawImage(img, avatarX, avatarY, avatarSize, avatarSize, avatarX, avatarY, avatarSize, avatarSize);
-
-            // Restore clipping
-            ctx.restore();
-
-            // Draw semi-transparent overlay
-            ctx.globalAlpha = 0.3;
-            ctx.fillStyle = "#000000";
             ctx.fill();
-            ctx.globalAlpha = 1;
+
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = 5;
+            ctx.stroke();
 
             // Draw user icon
-            ctx.fillStyle = "#FFFFFF";
-            ctx.beginPath();
-            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2 - 20, avatarSize / 6, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 50, avatarSize / 3, Math.PI, 2 * Math.PI);
-            ctx.fill();
+            ctx.fillStyle = "#A0A0A0";
+            const iconSize = avatarSize * 0.6;
+            const iconX = avatarX + (avatarSize - iconSize) / 2;
+            const iconY = avatarY + (avatarSize - iconSize) / 2;
+            
+            User({
+              size: iconSize,
+              absoluteStrokeWidth: true,
+              strokeWidth: 2,
+              color: "#A0A0A0"
+            }).draw(ctx, iconX, iconY);
           }
         };
         img.src = uploadedImage;
@@ -191,7 +177,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-8">LinkedIn Banner Photo Editor</h1>
+      <h1 className="text-3xl font-bold mb-8">Write text in LinkedIn banner</h1>
       
       <div className="w-full max-w-[1400px] space-y-4">
         {!uploadedImage ? (
@@ -222,7 +208,14 @@ export default function Home() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex gap-4 justify-center items-center flex-wrap">
+            <Textarea
+              value={bubbleText}
+              onChange={(e) => setBubbleText(e.target.value)}
+              placeholder="Enter text for the banner"
+              className="mt-2 text-lg"
+              rows={2}
+            />
+            <div className="flex flex-col gap-4 items-center">
               <div className="flex gap-2">
                 {boxStyles.map((style) => (
                   <Button
@@ -247,37 +240,32 @@ export default function Home() {
                   onValueChange={(value) => setBoxSize(value[0])}
                 />
               </div>
-              {selectedBoxStyle.name !== "None" && (
+              <div className="flex gap-4">
+                {selectedBoxStyle.name !== "None" && (
+                  <div>
+                    <label htmlFor="boxColor" className="mr-2">Box Color:</label>
+                    <input
+                      type="color"
+                      id="boxColor"
+                      value={boxColor}
+                      onChange={(e) => setBoxColor(e.target.value)}
+                    />
+                  </div>
+                )}
                 <div>
-                  <label htmlFor="boxColor" className="mr-2">Box Color:</label>
+                  <label htmlFor="textColor" className="mr-2">Text Color:</label>
                   <input
                     type="color"
-                    id="boxColor"
-                    value={boxColor}
-                    onChange={(e) => setBoxColor(e.target.value)}
+                    id="textColor"
+                    value={textColor}
+                    onChange={(e) => setTextColor(e.target.value)}
                   />
                 </div>
-              )}
-              <div>
-                <label htmlFor="textColor" className="mr-2">Text Color:</label>
-                <input
-                  type="color"
-                  id="textColor"
-                  value={textColor}
-                  onChange={(e) => setTextColor(e.target.value)}
-                />
               </div>
             </div>
-            <Textarea
-              value={bubbleText}
-              onChange={(e) => setBubbleText(e.target.value)}
-              placeholder="Enter text for the banner"
-              className="mt-2"
-              rows={2}
-            />
             <div className="flex justify-between">
-              <Button onClick={handleBackClick}>Back</Button>
-              <Button onClick={handleDownload}>Download Image</Button>
+              <Button onClick={handleBackClick} className="px-8 py-4 text-lg">Back</Button>
+              <Button onClick={handleDownload} className="px-8 py-4 text-lg">Download Image</Button>
             </div>
           </>
         )}
