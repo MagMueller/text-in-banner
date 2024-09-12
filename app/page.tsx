@@ -205,7 +205,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-8">Write text in LinkedIn banner</h1>
+      <h1 className="text-3xl font-bold mb-8">Write text into your LinkedIn banner</h1>
       
       <div className="w-full max-w-[1400px] space-y-4">
         {!uploadedImage ? (

@@ -53,7 +53,7 @@ export function ImageUpload({ onImageUpload, onClick }: ImageUploadProps) {
         onChange={handleChange}
       />
       <p className="text-gray-500 mb-4">
-        Click or drag and drop your image here
+        Click or drag and drop your LinkedIn banner here
       </p>
     </div>
   );
