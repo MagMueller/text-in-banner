@@ -22,6 +22,7 @@ export default function Home() {
   const [boxPosition, setBoxPosition] = useState({ x: 50, y: 50 });
   const [selectedBoxStyle, setSelectedBoxStyle] = useState(boxStyles[0]);
   const [boxSize, setBoxSize] = useState(100);
+  const [transparency, setTransparency] = useState(100);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDraggingRef = useRef(false);
@@ -114,6 +115,7 @@ export default function Home() {
     const boxHeight = 100 * (boxSize / 100);
 
     ctx.translate(boxPosition.x, boxPosition.y);
+    ctx.globalAlpha = transparency / 100;
 
     if (selectedBoxStyle.name !== "None") {
       // Draw box
@@ -136,6 +138,7 @@ export default function Home() {
       ctx.fillText(line, boxWidth / 2, boxHeight / 2 + (index - (lines.length - 1) / 2) * 30 * (boxSize / 100));
     });
 
+    ctx.globalAlpha = 1;
     ctx.resetTransform();
   };
 
@@ -155,7 +158,7 @@ export default function Home() {
           if (includeProfilePlaceholder) {
             // Draw profile picture placeholder
             const avatarSize = 250;
-            const avatarX = 100;
+            const avatarX = 50; // Moved further to the left
             const avatarY = 350 - avatarSize + 50; // 50px overlap
 
             ctx.fillStyle = "#E0E0E0";
@@ -190,7 +193,7 @@ export default function Home() {
 
   useEffect(() => {
     drawCanvas();
-  }, [uploadedImage, bubbleText, boxColor, textColor, boxPosition, selectedBoxStyle, boxSize]);
+  }, [uploadedImage, bubbleText, boxColor, textColor, boxPosition, selectedBoxStyle, boxSize, transparency]);
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center justify-center">
@@ -255,6 +258,17 @@ export default function Home() {
                   step={1}
                   value={[boxSize]}
                   onValueChange={(value) => setBoxSize(value[0])}
+                />
+              </div>
+              <div className="w-64">
+                <label htmlFor="transparency" className="block mb-2">Transparency:</label>
+                <Slider
+                  id="transparency"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[transparency]}
+                  onValueChange={(value) => setTransparency(value[0])}
                 />
               </div>
               <div className="flex gap-4">
