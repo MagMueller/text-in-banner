@@ -1,101 +1,287 @@
-import Image from "next/image";
+"use client";
+
+import { ImageUpload } from "@/components/image-upload";
+import { speechBubbles } from "@/components/speechBubbles";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
+import { MessageCircle, MessageSquare } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+const boxStyles = [
+  { name: "Round Box", icon: MessageSquare, path: speechBubbles[0].path },
+  { name: "Speech Bubble", icon: MessageCircle, path: speechBubbles[1].path },
+  { name: "None", icon: null, path: speechBubbles[2].path },
+];
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [bubbleText, setBubbleText] = useState("100% AI generated\nRealFakePhotos.com");
+  const [boxColor, setBoxColor] = useState("#000000");
+  const [textColor, setTextColor] = useState("#FFFFFF");
+  const [boxPosition, setBoxPosition] = useState({ x: 50, y: 50 });
+  const [selectedBoxStyle, setSelectedBoxStyle] = useState(boxStyles[0]);
+  const [boxSize, setBoxSize] = useState(100);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDraggingRef = useRef(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleImageUpload = (file: File) => {
+    const imageUrl = URL.createObjectURL(file);
+    setUploadedImage(imageUrl);
+  };
+
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleBackClick = () => {
+    setUploadedImage(null);
+    setBubbleText("100% AI generated\nRealFakePhotos.com");
+  };
+
+  const handleDownload = () => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Temporarily hide the profile picture placeholder
+        ctx.globalAlpha = 1;
+        drawCanvas(false);
+      }
+      const link = document.createElement('a');
+      link.download = 'linkedin-banner-with-text.png';
+      link.href = canvas.toDataURL();
+      link.click();
+      // Redraw the canvas with the profile picture placeholder
+      drawCanvas(true);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (x >= boxPosition.x && x <= boxPosition.x + 300 &&
+          y >= boxPosition.y && y <= boxPosition.y + 100) {
+        isDraggingRef.current = true;
+      }
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDraggingRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        setBoxPosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        });
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const drawTextAndBox = (ctx: CanvasRenderingContext2D) => {
+    const boxWidth = 300 * (boxSize / 100);
+    const boxHeight = 100 * (boxSize / 100);
+
+    ctx.translate(boxPosition.x, boxPosition.y);
+
+    if (selectedBoxStyle.name !== "None") {
+      // Draw box
+      ctx.fillStyle = boxColor;
+      ctx.beginPath();
+      const path = new Path2D(selectedBoxStyle.path(boxWidth, boxHeight));
+      ctx.fill(path);
+      ctx.strokeStyle = textColor;
+      ctx.lineWidth = 2;
+      ctx.stroke(path);
+    }
+
+    // Add text
+    ctx.fillStyle = textColor;
+    ctx.font = `bold ${20 * (boxSize / 100)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = bubbleText.split('\n');
+    lines.forEach((line, index) => {
+      ctx.fillText(line, boxWidth / 2, (30 + index * 30) * (boxSize / 100));
+    });
+
+    ctx.resetTransform();
+  };
+
+  const drawCanvas = (includeProfilePlaceholder: boolean = true) => {
+    if (uploadedImage && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const img = new Image();
+        img.onload = () => {
+          canvas.width = 1400;
+          canvas.height = 350;
+          ctx.drawImage(img, 0, 0, 1400, 350);
+
+          drawTextAndBox(ctx);
+
+          if (includeProfilePlaceholder) {
+            // Draw profile picture placeholder
+            const avatarSize = 200; // Increased size
+            const avatarX = 20;
+            const avatarY = 350 - avatarSize + 30; // 30px overlap
+
+            // Draw white circle for border
+            ctx.beginPath();
+            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2 + 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+
+            // Clip the avatar area
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, 2 * Math.PI);
+            ctx.clip();
+
+            // Draw part of the background image as avatar
+            ctx.drawImage(img, avatarX, avatarY, avatarSize, avatarSize, avatarX, avatarY, avatarSize, avatarSize);
+
+            // Restore clipping
+            ctx.restore();
+
+            // Draw semi-transparent overlay
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = "#000000";
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // Draw user icon
+            ctx.fillStyle = "#FFFFFF";
+            ctx.beginPath();
+            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2 - 20, avatarSize / 6, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 50, avatarSize / 3, Math.PI, 2 * Math.PI);
+            ctx.fill();
+          }
+        };
+        img.src = uploadedImage;
+      }
+    }
+  };
+
+  useEffect(() => {
+    drawCanvas();
+  }, [uploadedImage, bubbleText, boxColor, textColor, boxPosition, selectedBoxStyle, boxSize]);
+
+  return (
+    <div className="min-h-screen p-8 flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-8">LinkedIn Banner Photo Editor</h1>
+      
+      <div className="w-full max-w-[1400px] space-y-4">
+        {!uploadedImage ? (
+          <>
+            <ImageUpload onImageUpload={handleImageUpload} onClick={handleButtonClick} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileChange}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <Button 
+              onClick={handleButtonClick} 
+              className="w-full py-6 text-lg"
+            >
+              Select Image
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="relative w-full h-[350px]">
+              <canvas 
+                ref={canvasRef} 
+                className="w-full h-full cursor-move" 
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              />
+            </div>
+            <div className="flex gap-4 justify-center items-center flex-wrap">
+              <div className="flex gap-2">
+                {boxStyles.map((style) => (
+                  <Button
+                    key={style.name}
+                    onClick={() => setSelectedBoxStyle(style)}
+                    variant={selectedBoxStyle.name === style.name ? "default" : "outline"}
+                    className="px-2 py-1"
+                  >
+                    {style.icon && <style.icon className="mr-1 h-4 w-4" />}
+                    {style.name}
+                  </Button>
+                ))}
+              </div>
+              <div className="w-64">
+                <label htmlFor="boxSize" className="block mb-2">Text Size:</label>
+                <Slider
+                  id="boxSize"
+                  min={50}
+                  max={150}
+                  step={1}
+                  value={[boxSize]}
+                  onValueChange={(value) => setBoxSize(value[0])}
+                />
+              </div>
+              {selectedBoxStyle.name !== "None" && (
+                <div>
+                  <label htmlFor="boxColor" className="mr-2">Box Color:</label>
+                  <input
+                    type="color"
+                    id="boxColor"
+                    value={boxColor}
+                    onChange={(e) => setBoxColor(e.target.value)}
+                  />
+                </div>
+              )}
+              <div>
+                <label htmlFor="textColor" className="mr-2">Text Color:</label>
+                <input
+                  type="color"
+                  id="textColor"
+                  value={textColor}
+                  onChange={(e) => setTextColor(e.target.value)}
+                />
+              </div>
+            </div>
+            <Textarea
+              value={bubbleText}
+              onChange={(e) => setBubbleText(e.target.value)}
+              placeholder="Enter text for the banner"
+              className="mt-2"
+              rows={2}
+            />
+            <div className="flex justify-between">
+              <Button onClick={handleBackClick}>Back</Button>
+              <Button onClick={handleDownload}>Download Image</Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
