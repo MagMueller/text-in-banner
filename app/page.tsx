@@ -195,6 +195,14 @@ export default function Home() {
     drawCanvas();
   }, [uploadedImage, bubbleText, boxColor, textColor, boxPosition, selectedBoxStyle, boxSize, transparency]);
 
+  const handleBoxColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBoxColor(e.target.value);
+  };
+
+  const handleTextColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTextColor(e.target.value);
+  };
+
   return (
     <div className="min-h-screen p-8 flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold mb-8">Write text in LinkedIn banner</h1>
@@ -279,7 +287,8 @@ export default function Home() {
                       type="color"
                       id="boxColor"
                       value={boxColor}
-                      onChange={(e) => setBoxColor(e.target.value)}
+                      onChange={handleBoxColorChange}
+                      className="w-10 h-10 p-0 border-0 rounded-md cursor-pointer"
                     />
                   </div>
                 )}
@@ -289,7 +298,8 @@ export default function Home() {
                     type="color"
                     id="textColor"
                     value={textColor}
-                    onChange={(e) => setTextColor(e.target.value)}
+                    onChange={handleTextColorChange}
+                    className="w-10 h-10 p-0 border-0 rounded-md cursor-pointer"
                   />
                 </div>
               </div>
